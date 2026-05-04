@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User specific settings and credentials",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "telegramToken": { "type": "string", "description": "Encrypted or raw bot token" },
+        "telegramChatId": { "type": "string" },
+        "oauthConnected": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "A manual or synced academic task",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "priority": { "type": "string", "enum": ["high", "medium", "low"] },
+        "status": { "type": "string", "enum": ["todo", "in_progress", "completed"] },
+        "source": { "type": "string", "enum": ["manual", "classroom"] },
+        "courseName": { "type": "string" },
+        "externalId": { "type": "string", "description": "ID from Google Classroom" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "priority", "status", "source"]
+    },
+    "TimetableEntry": {
+      "title": "Timetable Entry",
+      "description": "A class entry in the weekly schedule",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "courseName": { "type": "string" },
+        "dayOfWeek": { "type": "string", "enum": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] },
+        "startTime": { "type": "string", "description": "HH:mm" },
+        "endTime": { "type": "string", "description": "HH:mm" },
+        "room": { "type": "string" }
+      },
+      "required": ["userId", "courseName", "dayOfWeek", "startTime", "endTime"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile data"
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "Tasks for a specific user"
+    },
+    "/users/{userId}/timetable/{entryId}": {
+      "schema": "TimetableEntry",
+      "description": "Weekly timetable entries"
+    }
+  }
+}

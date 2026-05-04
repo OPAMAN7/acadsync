@@ -1,0 +1,6 @@
+{
+  "name": "AcadSync",
+  "description": "An automated academic task manager that syncs Google Classroom assignments, manages personal tasks, and sends proactive Telegram alerts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

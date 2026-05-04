@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // User collection
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && 
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['telegramToken', 'telegramChatId', 'oauthConnected', 'googleTokens', 'email']));
+      
+      function isValidUser(data) {
+        return data.keys().hasAll(['email']) && 
+               data.email is string && data.email.size() <= 256 &&
+               (data.googleTokens == null || data.googleTokens is map);
+      }
+
+      // Tasks subcollection
+      match /tasks/{taskId} {
+        allow list: if isOwner(userId);
+        allow get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidTask(request.resource.data);
+        allow update: if isOwner(userId) && isValidTask(request.resource.data);
+        allow delete: if isOwner(userId);
+
+        function isValidTask(data) {
+          return data.userId == userId &&
+                 data.title is string && data.title.size() <= 1000 &&
+                 data.priority in ['high', 'medium', 'low'] &&
+                 data.status in ['todo', 'in_progress', 'completed'] &&
+                 data.source in ['manual', 'classroom'];
+        }
+      }
+
+      // Timetable subcollection
+      match /timetable/{entryId} {
+        allow list: if isOwner(userId);
+        allow get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidTimetable(request.resource.data);
+        allow update: if isOwner(userId) && isValidTimetable(request.resource.data);
+        allow delete: if isOwner(userId);
+
+        function isValidTimetable(data) {
+          return data.userId == userId &&
+                 data.courseName is string && data.courseName.size() <= 200 &&
+                 data.dayOfWeek in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] &&
+                 data.startTime is string && data.startTime.matches('^[0-9]{2}:[0-9]{2}$') &&
+                 data.endTime is string && data.endTime.matches('^[0-9]{2}:[0-9]{2}$');
+        }
+      }
+    }
+  }
+}
